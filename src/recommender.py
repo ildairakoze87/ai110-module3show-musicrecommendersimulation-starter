@@ -3,6 +3,10 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 
+# Experimental toggle: disable mood contribution to test sensitivity.
+DISABLE_MOOD_MATCH = True
+
+
 @dataclass
 class Song:
     """
@@ -131,9 +135,9 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
 
     # Finalized starter weighting recipe for the assignment.
     weights = {
-        "genre_match": 2.0,
+        "genre_match": 1.0,
         "mood_match": 1.0,
-        "energy_similarity": 1.0,
+        "energy_similarity": 2.0,
         "acoustic_bonus": 0.5,
         "valence_similarity": 0.8,
         "liveness_similarity": 0.5,
@@ -155,7 +159,7 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
         score += points
         reasons.append(f"genre match (+{points:.1f})")
 
-    if preferred_mood and song.get("mood") == preferred_mood:
+    if (not DISABLE_MOOD_MATCH) and preferred_mood and song.get("mood") == preferred_mood:
         points = weights["mood_match"]
         score += points
         reasons.append(f"mood match (+{points:.1f})")

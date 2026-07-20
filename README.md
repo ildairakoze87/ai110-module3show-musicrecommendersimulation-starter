@@ -133,11 +133,22 @@ Top Recommendations
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+I tested three normal profiles and four adversarial profiles:
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+- High-Energy Pop
+- Chill Lofi
+- Deep Intense Rock
+- Adversarial: Conflicting Mood vs Energy
+- Adversarial: Genre Lock-In Test
+- Adversarial: Acoustic Contradiction
+- Adversarial: Nonexistent Category
+
+Observed behavior:
+
+- The top song changed across normal profiles, showing the model can adapt by profile.
+- Chill Lofi results felt intuitive, with Midnight Coding and Library Rain ranked highest.
+- In conflicting/adversarial cases, high-energy or exact genre signals could still dominate, exposing expected tradeoffs in fixed-weight scoring.
+- When genre/mood categories were missing from the dataset, ranking fell back to numeric similarity and acoustic preference.
 
 ---
 
@@ -157,14 +168,9 @@ You will go deeper on this in your model card.
 
 ## Reflection
 
-Read and complete `model_card.md`:
+This project helped me understand how recommenders transform profile data into ranked decisions. With only a few weighted rules, the system produced believable outputs for very different profiles, especially for Chill Lofi and High-Energy Pop.
 
-[**Model Card**](model_card.md)
-
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
+I also learned that fairness and robustness issues appear quickly in simple systems. Adversarial profiles exposed how fixed weights can over-prioritize one preference and produce less intuitive results when user preferences conflict. That made the tradeoff between explainability and flexibility very clear.
 
 
 
