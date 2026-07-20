@@ -26,6 +26,12 @@ class Song:
     liveness: float = 0.0
     speechiness: float = 0.0
     instrumentalness: float = 0.0
+    popularity_100: int = 0
+    release_decade: str = "unknown"
+    mood_tags: str = ""
+    loudness_db: float = 0.0
+    duration_sec: int = 0
+    explicitness_0_1: int = 0
 
 
 @dataclass
@@ -42,6 +48,12 @@ class UserProfile:
     target_liveness: Optional[float] = None
     target_speechiness: Optional[float] = None
     target_instrumentalness: Optional[float] = None
+    target_popularity_100: Optional[int] = None
+    preferred_release_decade: Optional[str] = None
+    preferred_mood_tags: Optional[List[str]] = None
+    target_loudness_db: Optional[float] = None
+    target_duration_sec: Optional[int] = None
+    prefers_explicit: Optional[bool] = None
 
 
 class Recommender:
@@ -80,6 +92,12 @@ class Recommender:
             "liveness": user.target_liveness,
             "speechiness": user.target_speechiness,
             "instrumentalness": user.target_instrumentalness,
+            "popularity_100": user.target_popularity_100,
+            "release_decade": user.preferred_release_decade,
+            "mood_tags": user.preferred_mood_tags,
+            "loudness_db": user.target_loudness_db,
+            "duration_sec": user.target_duration_sec,
+            "prefers_explicit": user.prefers_explicit,
         }
 
     @staticmethod
@@ -98,6 +116,12 @@ class Recommender:
             "liveness": song.liveness,
             "speechiness": song.speechiness,
             "instrumentalness": song.instrumentalness,
+            "popularity_100": song.popularity_100,
+            "release_decade": song.release_decade,
+            "mood_tags": song.mood_tags,
+            "loudness_db": song.loudness_db,
+            "duration_sec": song.duration_sec,
+            "explicitness_0_1": song.explicitness_0_1,
         }
 
 
@@ -123,6 +147,12 @@ def load_songs(csv_path: str) -> List[Dict]:
                     "liveness": float(row.get("liveness", 0.0)),
                     "speechiness": float(row.get("speechiness", 0.0)),
                     "instrumentalness": float(row.get("instrumentalness", 0.0)),
+                    "popularity_100": int(row.get("popularity_100", 0)),
+                    "release_decade": row.get("release_decade", "unknown"),
+                    "mood_tags": row.get("mood_tags", ""),
+                    "loudness_db": float(row.get("loudness_db", 0.0)),
+                    "duration_sec": int(row.get("duration_sec", 0)),
+                    "explicitness_0_1": int(row.get("explicitness_0_1", 0)),
                 }
             )
     return songs
@@ -143,6 +173,12 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
         "liveness_similarity": 0.5,
         "speechiness_similarity": 0.5,
         "instrumentalness_similarity": 0.5,
+        "popularity_similarity": 0.5,
+        "decade_match": 0.6,
+        "mood_tags_overlap": 0.7,
+        "loudness_similarity": 0.4,
+        "duration_similarity": 0.4,
+        "explicitness_match": 0.3,
     }
 
     preferred_genre = user_prefs.get("genre") or user_prefs.get("favorite_genre")
@@ -153,6 +189,12 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     target_liveness = user_prefs.get("liveness") or user_prefs.get("target_liveness")
     target_speechiness = user_prefs.get("speechiness") or user_prefs.get("target_speechiness")
     target_instrumentalness = user_prefs.get("instrumentalness") or user_prefs.get("target_instrumentalness")
+    target_popularity_100 = user_prefs.get("popularity_100") or user_prefs.get("target_popularity_100")
+    preferred_release_decade = user_prefs.get("release_decade") or user_prefs.get("preferred_release_decade")
+    preferred_mood_tags = user_prefs.get("mood_tags") or user_prefs.get("preferred_mood_tags")
+    target_loudness_db = user_prefs.get("loudness_db") or user_prefs.get("target_loudness_db")
+    target_duration_sec = user_prefs.get("duration_sec") or user_prefs.get("target_duration_sec")
+    prefers_explicit = user_prefs.get("prefers_explicit")
 
     if preferred_genre and song.get("genre") == preferred_genre:
         points = weights["genre_match"]
@@ -206,6 +248,48 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
         points = instrumentalness_similarity * weights["instrumentalness_similarity"]
         score += points
         reasons.append(f"instrumentalness similarity (+{points:.2f})")
+
+    if target_popularity_100 is not None:
+        popularity_similarity = max(0.0, 1.0 - abs(float(song.get("popularity_100", 0.0)) - float(target_popularity_100)) / 100.0)
+        points = popularity_similarity * weights["popularity_similarity"]
+        score += points
+        reasons.append(f"popularity similarity (+{points:.2f})")
+
+    if preferred_release_decade and str(song.get("release_decade", "")).lower() == str(preferred_release_decade).lower():
+        points = weights["decade_match"]
+        score += points
+        reasons.append(f"release decade match (+{points:.1f})")
+
+    if preferred_mood_tags:
+        if isinstance(preferred_mood_tags, str):
+            pref_tags = {tag.strip().lower() for tag in preferred_mood_tags.split("|") if tag.strip()}
+        else:
+            pref_tags = {str(tag).strip().lower() for tag in preferred_mood_tags if str(tag).strip()}
+        song_tags = {tag.strip().lower() for tag in str(song.get("mood_tags", "")).split("|") if tag.strip()}
+        if pref_tags and song_tags:
+            overlap = len(pref_tags & song_tags) / len(pref_tags)
+            points = overlap * weights["mood_tags_overlap"]
+            score += points
+            reasons.append(f"mood tags overlap (+{points:.2f})")
+
+    if target_loudness_db is not None:
+        loudness_similarity = max(0.0, 1.0 - abs(float(song.get("loudness_db", 0.0)) - float(target_loudness_db)) / 20.0)
+        points = loudness_similarity * weights["loudness_similarity"]
+        score += points
+        reasons.append(f"loudness similarity (+{points:.2f})")
+
+    if target_duration_sec is not None:
+        duration_similarity = max(0.0, 1.0 - abs(float(song.get("duration_sec", 0.0)) - float(target_duration_sec)) / 300.0)
+        points = duration_similarity * weights["duration_similarity"]
+        score += points
+        reasons.append(f"duration similarity (+{points:.2f})")
+
+    if prefers_explicit is not None:
+        explicit_song = bool(int(song.get("explicitness_0_1", 0)))
+        if bool(prefers_explicit) == explicit_song:
+            points = weights["explicitness_match"]
+            score += points
+            reasons.append(f"explicitness match (+{points:.1f})")
 
     return round(score, 3), reasons
 

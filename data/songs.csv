@@ -1,19 +1,19 @@
-id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
-1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18
-2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71
-3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10
-4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86
-5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05
-6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92
-7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89
-8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
-9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
-10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
-11,Velvet Boulevard,Marina Vale,disco,romantic,0.81,122,0.88,0.86,0.12
-12,Golden Hour Echo,The Harbor Lights,folk,nostalgic,0.58,96,0.72,0.67,0.74
-13,Neon Skyline,Pixel Drift,hip-hop,rebellious,0.88,100,0.51,0.78,0.08
-14,Winter Orchard,Elara Rose,classical,serene,0.29,76,0.69,0.34,0.95
-15,Caribbean Moonlight,Sol Azul,salsa,upbeat,0.79,112,0.85,0.82,0.20
-16,Iron Harbor,Stonewake,metal,aggressive,0.92,168,0.36,0.56,0.03
-17,Midnight Orchard,Velvet Pines,folk,dreamy,0.54,88,0.66,0.61,0.80
-18,Afterglow Park,Northline,ambient,bittersweet,0.45,70,0.58,0.49,0.90
+id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness,popularity_100,release_decade,mood_tags,loudness_db,duration_sec,explicitness_0_1
+1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18,87,2020s,upbeat|feel-good|driving,-5.8,204,0
+2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71,74,2010s,focused|calm|study,-11.2,186,0
+3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10,82,2010s,aggressive|charged|workout,-4.3,221,0
+4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86,71,2020s,rainy|soft|nostalgic,-12.0,198,0
+5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05,90,2020s,motivational|anthemic|upbeat,-4.9,201,1
+6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92,63,2010s,floating|meditative|spacious,-14.1,244,0
+7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89,69,2000s,warm|cozy|late-night,-12.5,231,0
+8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22,80,2010s,nocturnal|retro|brooding,-7.0,215,0
+9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78,76,2020s,productive|minimal|steady,-10.8,192,0
+10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35,84,2020s,summer|bright|roadtrip,-6.1,208,0
+11,Velvet Boulevard,Marina Vale,disco,romantic,0.81,122,0.88,0.86,0.12,78,1980s,dancefloor|retro|flirty,-6.4,219,0
+12,Golden Hour Echo,The Harbor Lights,folk,nostalgic,0.58,96,0.72,0.67,0.74,73,2000s,acoustic|sunset|reflective,-9.5,226,0
+13,Neon Skyline,Pixel Drift,hip-hop,rebellious,0.88,100,0.51,0.78,0.08,85,2020s,assertive|urban|confident,-5.3,193,1
+14,Winter Orchard,Elara Rose,classical,serene,0.29,76,0.69,0.34,0.95,67,1990s,peaceful|orchestral|winter,-15.0,271,0
+15,Caribbean Moonlight,Sol Azul,salsa,upbeat,0.79,112,0.85,0.82,0.20,81,2010s,tropical|festive|dance,-6.8,212,0
+16,Iron Harbor,Stonewake,metal,aggressive,0.92,168,0.36,0.56,0.03,79,2000s,heavy|furious|adrenaline,-3.9,238,1
+17,Midnight Orchard,Velvet Pines,folk,dreamy,0.54,88,0.66,0.61,0.80,72,2010s,dreamy|acoustic|moonlit,-10.2,217,0
+18,Afterglow Park,Northline,ambient,bittersweet,0.45,70,0.58,0.49,0.90,68,2020s,melancholic|cinematic|calm,-11.6,233,0
