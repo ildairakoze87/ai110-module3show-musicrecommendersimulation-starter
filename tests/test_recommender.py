@@ -1,4 +1,4 @@
-from src.recommender import Song, UserProfile, Recommender
+from src.recommender import Song, UserProfile, Recommender, recommend_songs
 
 def make_small_recommender() -> Recommender:
     songs = [
@@ -59,3 +59,46 @@ def test_explain_recommendation_returns_non_empty_string():
     explanation = rec.explain_recommendation(user, song)
     assert isinstance(explanation, str)
     assert explanation.strip() != ""
+
+
+def test_ranking_strategy_changes_ordering():
+    songs = [
+        {
+            "id": 1,
+            "title": "Genre Match Low Energy",
+            "artist": "A",
+            "genre": "pop",
+            "mood": "happy",
+            "energy": 0.0,
+            "acousticness": 0.2,
+            "valence": 0.5,
+            "liveness": 0.2,
+            "speechiness": 0.1,
+            "instrumentalness": 0.1,
+        },
+        {
+            "id": 2,
+            "title": "Energy Match Wrong Genre",
+            "artist": "B",
+            "genre": "rock",
+            "mood": "happy",
+            "energy": 1.0,
+            "acousticness": 0.2,
+            "valence": 0.5,
+            "liveness": 0.2,
+            "speechiness": 0.1,
+            "instrumentalness": 0.1,
+        },
+    ]
+    user_prefs = {
+        "favorite_genre": "pop",
+        "favorite_mood": "happy",
+        "target_energy": 1.0,
+        "likes_acoustic": False,
+    }
+
+    balanced = recommend_songs(user_prefs, songs, k=2, ranking_strategy="balanced")
+    genre_first = recommend_songs(user_prefs, songs, k=2, ranking_strategy="genre_first")
+
+    assert balanced[0][0]["title"] == "Energy Match Wrong Genre"
+    assert genre_first[0][0]["title"] == "Genre Match Low Energy"

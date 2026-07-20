@@ -9,11 +9,49 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
+import argparse
+
 from src.recommender import load_songs, recommend_songs
 
 
+RANKING_MODES = {
+    "balanced": "Default blend of all features",
+    "genre_first": "Prioritizes genre and decade alignment",
+    "mood_first": "Prioritizes mood and mood-tag alignment",
+    "energy_focused": "Prioritizes energy and intensity features",
+}
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run music recommendations with selectable ranking modes.")
+    parser.add_argument(
+        "--mode",
+        default="balanced",
+        choices=[*RANKING_MODES.keys(), "all"],
+        help="Ranking strategy mode. Use 'all' to compare every mode.",
+    )
+    return parser.parse_args()
+
+
+def print_recommendations_block(profile_name: str, recommendations, ranking_mode: str) -> None:
+    print("\n" + "=" * 64)
+    print(f"Top Recommendations - {profile_name}")
+    print(f"Ranking Mode        - {ranking_mode} ({RANKING_MODES.get(ranking_mode, 'custom')})")
+    print("=" * 64)
+    for idx, rec in enumerate(recommendations, start=1):
+        song, score, explanation = rec
+        reason_items = [item.strip() for item in explanation.split(",") if item.strip()]
+
+        print(f"\n{idx}. {song['title']} - {song['artist']}")
+        print(f"   Final Score : {score:.2f}")
+        print("   Reasons     :")
+        for reason in reason_items:
+            print(f"   - {reason}")
+
+
 def main() -> None:
-    songs = load_songs("data/songs.csv") 
+    args = parse_args()
+    songs = load_songs("data/songs.csv")
 
     profiles = {
         "High-Energy Pop": {
@@ -91,37 +129,16 @@ def main() -> None:
         },
     }
 
-    for profile_name, user_prefs in profiles.items():
-        recommendations = recommend_songs(user_prefs, songs, k=5)
+    selected_modes = list(RANKING_MODES.keys()) if args.mode == "all" else [args.mode]
 
-        print("\n" + "=" * 64)
-        print(f"Top Recommendations — {profile_name}")
-        print("=" * 64)
-        for idx, rec in enumerate(recommendations, start=1):
-            song, score, explanation = rec
-            reason_items = [item.strip() for item in explanation.split(",") if item.strip()]
+    for ranking_mode in selected_modes:
+        for profile_name, user_prefs in profiles.items():
+            recommendations = recommend_songs(user_prefs, songs, k=5, ranking_strategy=ranking_mode)
+            print_recommendations_block(profile_name, recommendations, ranking_mode)
 
-            print(f"\n{idx}. {song['title']} — {song['artist']}")
-            print(f"   Final Score : {score:.2f}")
-            print("   Reasons     :")
-            for reason in reason_items:
-                print(f"   - {reason}")
-
-    for profile_name, user_prefs in adversarial_profiles.items():
-        recommendations = recommend_songs(user_prefs, songs, k=5)
-
-        print("\n" + "=" * 64)
-        print(f"Top Recommendations — {profile_name}")
-        print("=" * 64)
-        for idx, rec in enumerate(recommendations, start=1):
-            song, score, explanation = rec
-            reason_items = [item.strip() for item in explanation.split(",") if item.strip()]
-
-            print(f"\n{idx}. {song['title']} — {song['artist']}")
-            print(f"   Final Score : {score:.2f}")
-            print("   Reasons     :")
-            for reason in reason_items:
-                print(f"   - {reason}")
+        for profile_name, user_prefs in adversarial_profiles.items():
+            recommendations = recommend_songs(user_prefs, songs, k=5, ranking_strategy=ranking_mode)
+            print_recommendations_block(profile_name, recommendations, ranking_mode)
     print("\n" + "=" * 64)
 
 

@@ -61,12 +61,25 @@ Commands run by the agent included:
 
 **Which design pattern did you use?**
 
-<!-- e.g., Strategy, Factory, Observer, etc. -->
+Strategy pattern (simple mode-based strategy selection).
 
 **How did AI help you brainstorm or implement it?**
 
-<!-- Describe the conversation or suggestions that led to your decision -->
+I asked the AI to brainstorm a modular approach for supporting multiple ranking modes without duplicating the whole scoring function. The AI suggested a lightweight Strategy-style design where each ranking mode (balanced, genre-first, mood-first, energy-focused) behaves like a strategy that modifies feature weights while reusing one shared scoring pipeline.
+
+The AI contribution was useful because it separated concerns clearly:
+- core scoring math stays in one place
+- mode-specific behavior is isolated to strategy configuration
+- the CLI only selects a strategy name and passes it through
+
+I then implemented that approach by introducing mode multipliers and a strategy-weight resolver so new ranking styles can be added with minimal code changes.
 
 **How does the pattern appear in your final code?**
 
-<!-- Point to the relevant class or method -->
+The pattern appears in `src/recommender.py` through:
+- `BASE_WEIGHTS` as the default policy baseline
+- `STRATEGY_MULTIPLIERS` as interchangeable strategy definitions
+- `get_strategy_weights(ranking_strategy)` as the strategy selector/resolver
+- `score_song(..., ranking_strategy=...)` and `recommend_songs(..., ranking_strategy=...)` that apply the chosen strategy without changing the scoring pipeline
+
+It is exposed to users in `src/main.py` via `--mode` (`balanced`, `genre_first`, `mood_first`, `energy_focused`, or `all`). This keeps the code modular and makes strategy changes explicit and testable.

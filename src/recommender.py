@@ -7,6 +7,57 @@ from typing import Dict, List, Optional, Tuple
 DISABLE_MOOD_MATCH = True
 
 
+BASE_WEIGHTS = {
+    "genre_match": 1.0,
+    "mood_match": 1.0,
+    "energy_similarity": 2.0,
+    "acoustic_bonus": 0.5,
+    "valence_similarity": 0.8,
+    "liveness_similarity": 0.5,
+    "speechiness_similarity": 0.5,
+    "instrumentalness_similarity": 0.5,
+    "popularity_similarity": 0.5,
+    "decade_match": 0.6,
+    "mood_tags_overlap": 0.7,
+    "loudness_similarity": 0.4,
+    "duration_similarity": 0.4,
+    "explicitness_match": 0.3,
+}
+
+
+STRATEGY_MULTIPLIERS = {
+    "balanced": {},
+    "genre_first": {
+        "genre_match": 2.0,
+        "decade_match": 1.4,
+        "energy_similarity": 0.8,
+        "mood_tags_overlap": 0.8,
+    },
+    "mood_first": {
+        "mood_match": 2.0,
+        "mood_tags_overlap": 1.8,
+        "valence_similarity": 1.2,
+        "energy_similarity": 0.8,
+    },
+    "energy_focused": {
+        "energy_similarity": 2.2,
+        "loudness_similarity": 1.6,
+        "duration_similarity": 1.3,
+        "genre_match": 0.7,
+        "mood_match": 0.8,
+    },
+}
+
+
+def get_strategy_weights(ranking_strategy: str = "balanced") -> Dict[str, float]:
+    """Return a weight map for the selected ranking strategy."""
+    strategy = (ranking_strategy or "balanced").strip().lower()
+    weights = BASE_WEIGHTS.copy()
+    for feature, multiplier in STRATEGY_MULTIPLIERS.get(strategy, {}).items():
+        weights[feature] = weights[feature] * multiplier
+    return weights
+
+
 @dataclass
 class Song:
     """
@@ -65,17 +116,25 @@ class Recommender:
     def __init__(self, songs: List[Song]):
         self.songs = songs
 
-    def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
+    def recommend(self, user: UserProfile, k: int = 5, ranking_strategy: str = "balanced") -> List[Song]:
         scored_songs = []
         for song in self.songs:
-            score, _ = score_song(self._profile_to_prefs(user), self._song_to_dict(song))
+            score, _ = score_song(
+                self._profile_to_prefs(user),
+                self._song_to_dict(song),
+                ranking_strategy=ranking_strategy,
+            )
             scored_songs.append((song, score))
 
         scored_songs.sort(key=lambda item: item[1], reverse=True)
         return [song for song, _ in scored_songs[:k]]
 
-    def explain_recommendation(self, user: UserProfile, song: Song) -> str:
-        score, reasons = score_song(self._profile_to_prefs(user), self._song_to_dict(song))
+    def explain_recommendation(self, user: UserProfile, song: Song, ranking_strategy: str = "balanced") -> str:
+        score, reasons = score_song(
+            self._profile_to_prefs(user),
+            self._song_to_dict(song),
+            ranking_strategy=ranking_strategy,
+        )
         if not reasons:
             return f"This song fits the profile with a score of {score:.2f}."
         explanation = ", ".join(reasons)
@@ -158,28 +217,12 @@ def load_songs(csv_path: str) -> List[Dict]:
     return songs
 
 
-def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
+def score_song(user_prefs: Dict, song: Dict, ranking_strategy: str = "balanced") -> Tuple[float, List[str]]:
     """Score one song against user preferences and return score plus reasons."""
     score = 0.0
     reasons: List[str] = []
 
-    # Finalized starter weighting recipe for the assignment.
-    weights = {
-        "genre_match": 1.0,
-        "mood_match": 1.0,
-        "energy_similarity": 2.0,
-        "acoustic_bonus": 0.5,
-        "valence_similarity": 0.8,
-        "liveness_similarity": 0.5,
-        "speechiness_similarity": 0.5,
-        "instrumentalness_similarity": 0.5,
-        "popularity_similarity": 0.5,
-        "decade_match": 0.6,
-        "mood_tags_overlap": 0.7,
-        "loudness_similarity": 0.4,
-        "duration_similarity": 0.4,
-        "explicitness_match": 0.3,
-    }
+    weights = get_strategy_weights(ranking_strategy)
 
     preferred_genre = user_prefs.get("genre") or user_prefs.get("favorite_genre")
     preferred_mood = user_prefs.get("mood") or user_prefs.get("favorite_mood")
@@ -294,12 +337,17 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     return round(score, 3), reasons
 
 
-def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
+def recommend_songs(
+    user_prefs: Dict,
+    songs: List[Dict],
+    k: int = 5,
+    ranking_strategy: str = "balanced",
+) -> List[Tuple[Dict, float, str]]:
     """Rank songs by score and return the top-k recommendations with explanations."""
     scored_songs = [
         (song, score, ", ".join(reasons) if reasons else "general fit")
         for song in songs
-        for score, reasons in [score_song(user_prefs, song)]
+        for score, reasons in [score_song(user_prefs, song, ranking_strategy=ranking_strategy)]
     ]
     ranked = sorted(scored_songs, key=lambda item: item[1], reverse=True)
     return ranked[:k]

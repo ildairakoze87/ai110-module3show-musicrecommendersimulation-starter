@@ -70,6 +70,23 @@ pip install -r requirements.txt
 python -m src.main
 ```
 
+4. Choose a ranking strategy mode:
+
+```bash
+python -m src.main --mode balanced
+python -m src.main --mode genre_first
+python -m src.main --mode mood_first
+python -m src.main --mode energy_focused
+python -m src.main --mode all
+```
+
+Available modes:
+
+- balanced: default blend of all features
+- genre_first: stronger weight on genre/decade alignment
+- mood_first: stronger weight on mood and mood-tag alignment
+- energy_focused: stronger weight on energy and intensity features
+
 ### Running Tests
 
 Run the starter tests with:
