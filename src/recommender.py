@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import csv
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
@@ -58,6 +60,159 @@ def get_strategy_weights(ranking_strategy: str = "balanced") -> Dict[str, float]
     return weights
 
 
+def _diversity_adjusted_score(
+    base_score: float,
+    artist: str,
+    genre: str,
+    artist_counts: Dict[str, int],
+    genre_counts: Dict[str, int],
+    artist_penalty: float,
+    genre_penalty: float,
+) -> Tuple[float, float, float]:
+    """Apply repeat penalties for artist/genre based on already-selected songs."""
+    artist_repeat_penalty = artist_counts.get(artist, 0) * artist_penalty
+    genre_repeat_penalty = genre_counts.get(genre, 0) * genre_penalty
+    adjusted_score = base_score - artist_repeat_penalty - genre_repeat_penalty
+    return adjusted_score, artist_repeat_penalty, genre_repeat_penalty
+
+
+def _apply_diversity_penalty_to_dict_results(
+    scored_songs: List[Tuple[Dict, float, List[str]]],
+    k: int,
+    max_songs_per_artist: int = 2,
+    max_songs_per_genre: int = 3,
+    artist_penalty: float = 0.35,
+    genre_penalty: float = 0.20,
+) -> List[Tuple[Dict, float, str]]:
+    """Greedy reranker that discourages repeated artists and genres in top-k."""
+    remaining = list(scored_songs)
+    artist_counts: Dict[str, int] = {}
+    genre_counts: Dict[str, int] = {}
+    selected: List[Tuple[Dict, float, str]] = []
+
+    while remaining and len(selected) < k:
+        best_index = None
+        best_adjusted = float("-inf")
+        best_artist_penalty = 0.0
+        best_genre_penalty = 0.0
+
+        for idx, (song, base_score, _) in enumerate(remaining):
+            artist = str(song.get("artist", "unknown"))
+            genre = str(song.get("genre", "unknown"))
+            if artist_counts.get(artist, 0) >= max_songs_per_artist:
+                continue
+            if genre_counts.get(genre, 0) >= max_songs_per_genre:
+                continue
+
+            adjusted_score, artist_repeat_penalty, genre_repeat_penalty = _diversity_adjusted_score(
+                base_score,
+                artist,
+                genre,
+                artist_counts,
+                genre_counts,
+                artist_penalty,
+                genre_penalty,
+            )
+            if adjusted_score > best_adjusted:
+                best_adjusted = adjusted_score
+                best_index = idx
+                best_artist_penalty = artist_repeat_penalty
+                best_genre_penalty = genre_repeat_penalty
+
+        # If constraints are too strict for remaining songs, back off and fill by adjusted score only.
+        if best_index is None:
+            for idx, (song, base_score, _) in enumerate(remaining):
+                adjusted_score, artist_repeat_penalty, genre_repeat_penalty = _diversity_adjusted_score(
+                    base_score,
+                    str(song.get("artist", "unknown")),
+                    str(song.get("genre", "unknown")),
+                    artist_counts,
+                    genre_counts,
+                    artist_penalty,
+                    genre_penalty,
+                )
+                if adjusted_score > best_adjusted:
+                    best_adjusted = adjusted_score
+                    best_index = idx
+                    best_artist_penalty = artist_repeat_penalty
+                    best_genre_penalty = genre_repeat_penalty
+
+        song, _, reasons = remaining.pop(best_index)
+        artist = str(song.get("artist", "unknown"))
+        genre = str(song.get("genre", "unknown"))
+        artist_counts[artist] = artist_counts.get(artist, 0) + 1
+        genre_counts[genre] = genre_counts.get(genre, 0) + 1
+
+        reason_items = list(reasons)
+        if best_artist_penalty > 0:
+            reason_items.append(f"artist diversity penalty (-{best_artist_penalty:.2f})")
+        if best_genre_penalty > 0:
+            reason_items.append(f"genre diversity penalty (-{best_genre_penalty:.2f})")
+
+        selected.append((song, round(best_adjusted, 3), ", ".join(reason_items) if reason_items else "general fit"))
+
+    return selected
+
+
+def _apply_diversity_penalty_to_song_results(
+    scored_songs: List[Tuple[Song, float]],
+    k: int,
+    max_songs_per_artist: int = 2,
+    max_songs_per_genre: int = 3,
+    artist_penalty: float = 0.35,
+    genre_penalty: float = 0.20,
+) -> List[Song]:
+    """Greedy reranker for OOP path with the same artist/genre diversity policy."""
+    remaining = list(scored_songs)
+    artist_counts: Dict[str, int] = {}
+    genre_counts: Dict[str, int] = {}
+    selected: List[Song] = []
+
+    while remaining and len(selected) < k:
+        best_index = None
+        best_adjusted = float("-inf")
+
+        for idx, (song, base_score) in enumerate(remaining):
+            if artist_counts.get(song.artist, 0) >= max_songs_per_artist:
+                continue
+            if genre_counts.get(song.genre, 0) >= max_songs_per_genre:
+                continue
+            adjusted_score, _, _ = _diversity_adjusted_score(
+                base_score,
+                song.artist,
+                song.genre,
+                artist_counts,
+                genre_counts,
+                artist_penalty,
+                genre_penalty,
+            )
+            if adjusted_score > best_adjusted:
+                best_adjusted = adjusted_score
+                best_index = idx
+
+        if best_index is None:
+            for idx, (song, base_score) in enumerate(remaining):
+                adjusted_score, _, _ = _diversity_adjusted_score(
+                    base_score,
+                    song.artist,
+                    song.genre,
+                    artist_counts,
+                    genre_counts,
+                    artist_penalty,
+                    genre_penalty,
+                )
+                if adjusted_score > best_adjusted:
+                    best_adjusted = adjusted_score
+                    best_index = idx
+
+        song, _ = remaining.pop(best_index)
+        artist_counts[song.artist] = artist_counts.get(song.artist, 0) + 1
+        genre_counts[song.genre] = genre_counts.get(song.genre, 0) + 1
+        selected.append(song)
+
+    return selected
+
+
 @dataclass
 class Song:
     """
@@ -116,7 +271,16 @@ class Recommender:
     def __init__(self, songs: List[Song]):
         self.songs = songs
 
-    def recommend(self, user: UserProfile, k: int = 5, ranking_strategy: str = "balanced") -> List[Song]:
+    def recommend(
+        self,
+        user: UserProfile,
+        k: int = 5,
+        ranking_strategy: str = "balanced",
+        max_songs_per_artist: int = 2,
+        max_songs_per_genre: int = 3,
+        artist_penalty: float = 0.35,
+        genre_penalty: float = 0.20,
+    ) -> List[Song]:
         scored_songs = []
         for song in self.songs:
             score, _ = score_song(
@@ -127,7 +291,14 @@ class Recommender:
             scored_songs.append((song, score))
 
         scored_songs.sort(key=lambda item: item[1], reverse=True)
-        return [song for song, _ in scored_songs[:k]]
+        return _apply_diversity_penalty_to_song_results(
+            scored_songs,
+            k,
+            max_songs_per_artist=max_songs_per_artist,
+            max_songs_per_genre=max_songs_per_genre,
+            artist_penalty=artist_penalty,
+            genre_penalty=genre_penalty,
+        )
 
     def explain_recommendation(self, user: UserProfile, song: Song, ranking_strategy: str = "balanced") -> str:
         score, reasons = score_song(
@@ -342,12 +513,23 @@ def recommend_songs(
     songs: List[Dict],
     k: int = 5,
     ranking_strategy: str = "balanced",
+    max_songs_per_artist: int = 2,
+    max_songs_per_genre: int = 3,
+    artist_penalty: float = 0.35,
+    genre_penalty: float = 0.20,
 ) -> List[Tuple[Dict, float, str]]:
     """Rank songs by score and return the top-k recommendations with explanations."""
     scored_songs = [
-        (song, score, ", ".join(reasons) if reasons else "general fit")
+        (song, score, reasons)
         for song in songs
         for score, reasons in [score_song(user_prefs, song, ranking_strategy=ranking_strategy)]
     ]
     ranked = sorted(scored_songs, key=lambda item: item[1], reverse=True)
-    return ranked[:k]
+    return _apply_diversity_penalty_to_dict_results(
+        ranked,
+        k,
+        max_songs_per_artist=max_songs_per_artist,
+        max_songs_per_genre=max_songs_per_genre,
+        artist_penalty=artist_penalty,
+        genre_penalty=genre_penalty,
+    )

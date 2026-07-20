@@ -102,3 +102,79 @@ def test_ranking_strategy_changes_ordering():
 
     assert balanced[0][0]["title"] == "Energy Match Wrong Genre"
     assert genre_first[0][0]["title"] == "Genre Match Low Energy"
+
+
+def test_diversity_penalty_limits_repeated_artists_in_top_results():
+    songs = [
+        {
+            "id": 1,
+            "title": "A1",
+            "artist": "Artist A",
+            "genre": "pop",
+            "mood": "happy",
+            "energy": 0.9,
+            "acousticness": 0.2,
+            "valence": 0.8,
+            "liveness": 0.2,
+            "speechiness": 0.1,
+            "instrumentalness": 0.1,
+        },
+        {
+            "id": 2,
+            "title": "A2",
+            "artist": "Artist A",
+            "genre": "pop",
+            "mood": "happy",
+            "energy": 0.88,
+            "acousticness": 0.2,
+            "valence": 0.8,
+            "liveness": 0.2,
+            "speechiness": 0.1,
+            "instrumentalness": 0.1,
+        },
+        {
+            "id": 3,
+            "title": "A3",
+            "artist": "Artist A",
+            "genre": "pop",
+            "mood": "happy",
+            "energy": 0.86,
+            "acousticness": 0.2,
+            "valence": 0.8,
+            "liveness": 0.2,
+            "speechiness": 0.1,
+            "instrumentalness": 0.1,
+        },
+        {
+            "id": 4,
+            "title": "B1",
+            "artist": "Artist B",
+            "genre": "rock",
+            "mood": "happy",
+            "energy": 0.82,
+            "acousticness": 0.2,
+            "valence": 0.8,
+            "liveness": 0.2,
+            "speechiness": 0.1,
+            "instrumentalness": 0.1,
+        },
+    ]
+    user_prefs = {
+        "favorite_genre": "pop",
+        "favorite_mood": "happy",
+        "target_energy": 0.9,
+        "likes_acoustic": False,
+    }
+
+    results = recommend_songs(
+        user_prefs,
+        songs,
+        k=2,
+        ranking_strategy="balanced",
+        max_songs_per_artist=1,
+        max_songs_per_genre=3,
+    )
+
+    top_artists = [song["artist"] for song, _, _ in results]
+    assert top_artists.count("Artist A") == 1
+    assert top_artists.count("Artist B") == 1

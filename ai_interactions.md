@@ -21,6 +21,7 @@ I asked the agent to iteratively build and refine a CLI-first music recommender,
 - "Introduce 5 or more complex attributes to your dataset"
 - "Update both data/songs.csv and the scoring logic in src/recommender.py so scoring accounts for the new attributes"
 - "Update the Evaluation section of your model_card.md"
+- "Implement a diversity-penalty reranking rule: when selecting top recommendations, subtract a penalty from a candidate song if its artist already appears in the selected list (and optionally a smaller penalty for repeated genre), then pick the highest adjusted score each step."
 
 **What did the agent generate or change?**
 
@@ -29,6 +30,7 @@ I asked the agent to iteratively build and refine a CLI-first music recommender,
 	- weighted score computation
 	- explainable reason strings with point values
 	- ranking logic for top-k recommendations
+	- diversity penalty reranking to discourage repeated artists/genres in top results
 	- support for new attributes (`popularity_100`, `release_decade`, `mood_tags`, `loudness_db`, `duration_sec`, `explicitness_0_1`)
 - Updated CLI workflow and profile runs in `src/main.py`:
 	- multiple core profiles and adversarial profiles

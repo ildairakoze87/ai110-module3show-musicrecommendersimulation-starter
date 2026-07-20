@@ -35,7 +35,8 @@ For each song:
 4. Add an energy similarity score, where:
    similarity = 1.0 - abs(song_energy - target_energy)
 5. Add smaller tie-breaker contributions from acousticness, valence, liveness, speechiness, and instrumentalness when those user targets/preferences are provided.
-6. After scoring all songs, rank them from highest to lowest and return the Top K.
+6. Apply a diversity penalty during top-k selection so repeated artists (and repeated genres) lose points if they already appear in the selected list.
+7. Return the Top K songs after this adjusted reranking.
 
 This setup keeps the logic explainable: each recommendation can be traced to exact matching and similarity terms.
 
