@@ -22,6 +22,7 @@ I asked the agent to iteratively build and refine a CLI-first music recommender,
 - "Update both data/songs.csv and the scoring logic in src/recommender.py so scoring accounts for the new attributes"
 - "Update the Evaluation section of your model_card.md"
 - "Implement a diversity-penalty reranking rule: when selecting top recommendations, subtract a penalty from a candidate song if its artist already appears in the selected list (and optionally a smaller penalty for repeated genre), then pick the highest adjusted score each step."
+- "Improve terminal output readability using tabulate or plain ASCII table formatting, and ensure each row includes song title, artist, score, and the reasons that explain that score."
 
 **What did the agent generate or change?**
 

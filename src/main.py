@@ -10,6 +10,15 @@ You will implement the functions in recommender.py:
 """
 
 import argparse
+import importlib
+
+
+def get_tabulate_func():
+    """Lazily resolve tabulate if installed; return None otherwise."""
+    try:
+        return importlib.import_module("tabulate").tabulate
+    except Exception:
+        return None
 
 from src.recommender import load_songs, recommend_songs
 
@@ -33,20 +42,71 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def truncate(text: str, max_len: int) -> str:
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 3] + "..."
+
+
+def build_recommendations_table(recommendations) -> str:
+    tabulate_func = get_tabulate_func()
+    rows = []
+    for idx, rec in enumerate(recommendations, start=1):
+        song, score, explanation = rec
+        reason_items = [item.strip() for item in explanation.split(",") if item.strip()]
+        summary_reasons = "; ".join(reason_items[:3]) if reason_items else "general fit"
+        rows.append(
+            [
+                idx,
+                truncate(song["title"], 26),
+                truncate(song["artist"], 20),
+                truncate(song.get("genre", "unknown"), 12),
+                f"{score:.2f}",
+                truncate(summary_reasons, 70),
+            ]
+        )
+
+    headers = ["#", "Title", "Artist", "Genre", "Score", "Reasons"]
+    if tabulate_func is not None:
+        return tabulate_func(rows, headers=headers, tablefmt="github")
+
+    # Plain ASCII fallback when tabulate is unavailable.
+    col_widths = [
+        max(len(str(row[col_idx])) for row in ([headers] + rows))
+        for col_idx in range(len(headers))
+    ]
+
+    def format_row(values) -> str:
+        parts = []
+        for idx, value in enumerate(values):
+            align_right = headers[idx] in {"#", "Score"}
+            text = str(value)
+            parts.append(text.rjust(col_widths[idx]) if align_right else text.ljust(col_widths[idx]))
+        return " | ".join(parts)
+
+    separator = "-+-".join("-" * width for width in col_widths)
+    return "\n".join([format_row(headers), separator] + [format_row(row) for row in rows])
+
+
 def print_recommendations_block(profile_name: str, recommendations, ranking_mode: str) -> None:
     print("\n" + "=" * 64)
     print(f"Top Recommendations - {profile_name}")
     print(f"Ranking Mode        - {ranking_mode} ({RANKING_MODES.get(ranking_mode, 'custom')})")
     print("=" * 64)
-    for idx, rec in enumerate(recommendations, start=1):
-        song, score, explanation = rec
-        reason_items = [item.strip() for item in explanation.split(",") if item.strip()]
+    print(build_recommendations_table(recommendations))
 
-        print(f"\n{idx}. {song['title']} - {song['artist']}")
-        print(f"   Final Score : {score:.2f}")
-        print("   Reasons     :")
-        for reason in reason_items:
-            print(f"   - {reason}")
+    top_score = None
+    for _, score, _ in recommendations:
+        if top_score is None:
+            top_score = score
+
+    avg_score = sum(score for _, score, _ in recommendations) / len(recommendations)
+    print(
+        "Summary: "
+        f"top={top_score:.2f} | avg_top_{len(recommendations)}={avg_score:.2f} | "
+        f"unique_artists={len({song['artist'] for song, _, _ in recommendations})} | "
+        f"unique_genres={len({song.get('genre', 'unknown') for song, _, _ in recommendations})}"
+    )
 
 
 def main() -> None:
