@@ -11,22 +11,19 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-This version builds a simple content-based music recommender that suggests songs by matching a user’s taste profile to song attributes such as genre, mood, energy, and acousticness.
+This version builds a simple content-based music recommender that suggests songs by matching a user’s taste profile to song attributes such as genre, mood, energy, acousticness, and a few additional numeric features like liveness, speechiness, and instrumentalness.
 
 ---
 
 ## How The System Works
 
-This system uses a simple rule-based recommender. Each song is described by features such as genre, mood, energy, valence, tempo, and acousticness. The user profile stores a preferred genre, preferred mood, target energy level, and a preference for acoustic or non-acoustic songs.
+This system uses a simple content-based recommender. Each song is described by features such as genre, mood, energy, valence, tempo, acousticness, liveness, speechiness, and instrumentalness. The user profile stores a preferred genre, preferred mood, target energy level, and a preference for acoustic or non-acoustic songs, plus optional targets for the new numeric features.
 
-To score a song, the recommender gives points for how well it matches the user profile:
-
-- +3 if the song genre matches the user’s favorite genre
-- +2 if the song mood matches the user’s favorite mood
-- + a similarity score for energy, where songs closer to the target energy receive higher scores
-- + a small bonus for acoustic preference
+To score a song, the recommender adds points when the song matches the user’s preferences. Genre and mood matches give the biggest boosts, while energy is scored by how close it is to the user’s target value. Acousticness is also used as a smaller signal for whether the user prefers more acoustic or less acoustic songs.
 
 The recommender ranks all songs by total score and returns the highest-scoring ones. This makes the recommendations easy to explain because each result can be traced to a few clear reasons.
+
+At a larger scale, real recommender systems usually combine this kind of content matching with user-interaction data such as listens, skips, likes, and playlists. They often learn patterns from millions of users and songs, then update recommendations continuously as behavior changes.
 
 ---
 
