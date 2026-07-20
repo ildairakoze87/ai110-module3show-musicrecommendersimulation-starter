@@ -98,10 +98,7 @@ class Recommender:
 
 
 def load_songs(csv_path: str) -> List[Dict]:
-    """
-    Loads songs from a CSV file.
-    Required by src/main.py
-    """
+    """Load songs from a CSV file into a list of typed dictionaries."""
     print(f"Loading songs from {csv_path}...")
     with open(csv_path, newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
@@ -128,10 +125,7 @@ def load_songs(csv_path: str) -> List[Dict]:
 
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
-    """
-    Scores a single song against user preferences.
-    Required by recommend_songs() and src/main.py
-    """
+    """Score one song against user preferences and return score plus reasons."""
     score = 0.0
     reasons: List[str] = []
 
@@ -213,15 +207,11 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
 
 
 def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
-    """
-    Functional implementation of the recommendation logic.
-    Required by src/main.py
-    """
-    scored_songs = []
-    for song in songs:
-        score, reasons = score_song(user_prefs, song)
-        explanation = ", ".join(reasons) if reasons else "general fit"
-        scored_songs.append((song, score, explanation))
-
-    scored_songs.sort(key=lambda item: item[1], reverse=True)
-    return scored_songs[:k]
+    """Rank songs by score and return the top-k recommendations with explanations."""
+    scored_songs = [
+        (song, score, ", ".join(reasons) if reasons else "general fit")
+        for song in songs
+        for score, reasons in [score_song(user_prefs, song)]
+    ]
+    ranked = sorted(scored_songs, key=lambda item: item[1], reverse=True)
+    return ranked[:k]

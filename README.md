@@ -84,15 +84,47 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Sample Recommendation Output
 
-Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
+```text
+Loading songs from data/songs.csv...
 
-```
-# e.g.:
-# User profile: genre=indie, mood=chill, energy=low
-# Recommendations:
-#   1. ...
-#   2. ...
-#   3. ...
+===============================================================
+Top Recommendations
+===============================================================
+
+1. Midnight Coding - LoRoom
+   Final Score : 6.25
+   Reasons     :
+   - genre match (+2.0)
+   - mood match (+1.0)
+   - energy similarity (+1.00)
+   - acoustic preference match (+0.5)
+   - valence similarity (+0.75)
+   - liveness similarity (+0.38)
+   - speechiness similarity (+0.45)
+   - instrumentalness similarity (+0.17)
+
+2. Library Rain - Paper Lanterns
+   Final Score : 6.21
+   Reasons     :
+   - genre match (+2.0)
+   - mood match (+1.0)
+   - energy similarity (+0.93)
+   - acoustic preference match (+0.5)
+   - valence similarity (+0.78)
+   - liveness similarity (+0.38)
+   - speechiness similarity (+0.45)
+   - instrumentalness similarity (+0.17)
+
+3. Focus Flow - LoRoom
+   Final Score : 5.26
+   Reasons     :
+   - genre match (+2.0)
+   - energy similarity (+0.98)
+   - acoustic preference match (+0.5)
+   - valence similarity (+0.78)
+   - liveness similarity (+0.38)
+   - speechiness similarity (+0.45)
+   - instrumentalness similarity (+0.17)
 ```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->
