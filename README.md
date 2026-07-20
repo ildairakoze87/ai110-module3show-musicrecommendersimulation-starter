@@ -11,23 +11,22 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+This version builds a simple content-based music recommender that suggests songs by matching a user’s taste profile to song attributes such as genre, mood, energy, and acousticness.
 
 ---
 
 ## How The System Works
 
-Explain your design in plain language.
+This system uses a simple rule-based recommender. Each song is described by features such as genre, mood, energy, valence, tempo, and acousticness. The user profile stores a preferred genre, preferred mood, target energy level, and a preference for acoustic or non-acoustic songs.
 
-Some prompts to answer:
+To score a song, the recommender gives points for how well it matches the user profile:
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+- +3 if the song genre matches the user’s favorite genre
+- +2 if the song mood matches the user’s favorite mood
+- + a similarity score for energy, where songs closer to the target energy receive higher scores
+- + a small bonus for acoustic preference
 
-You can include a simple diagram or bullet list if helpful.
+The recommender ranks all songs by total score and returns the highest-scoring ones. This makes the recommendations easy to explain because each result can be traced to a few clear reasons.
 
 ---
 
