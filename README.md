@@ -19,7 +19,13 @@ This version builds a simple content-based music recommender that suggests songs
 
 This system uses a simple content-based recommender. Each song is described by features such as genre, mood, energy, valence, tempo, acousticness, liveness, speechiness, and instrumentalness. The user profile stores a preferred genre, preferred mood, target energy level, and a preference for acoustic or non-acoustic songs, plus optional targets for the new numeric features.
 
-To score a song, the recommender adds points when the song matches the user’s preferences. Genre and mood matches give the biggest boosts, while energy is scored by how close it is to the user’s target value. Acousticness is also used as a smaller signal for whether the user prefers more acoustic or less acoustic songs.
+To score a song, the recommender uses this finalized starter recipe:
+
+- Genre match: +2.0
+- Mood match: +1.0
+- Energy similarity: add a similarity score based on closeness to target energy, where similarity = 1.0 - abs(song_energy - target_energy)
+
+Additional optional features (acousticness, valence, liveness, speechiness, instrumentalness) are kept as smaller tie-breaker signals.
 
 The recommender ranks all songs by total score and returns the highest-scoring ones. This makes the recommendations easy to explain because each result can be traced to a few clear reasons.
 
