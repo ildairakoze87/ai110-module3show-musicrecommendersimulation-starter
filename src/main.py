@@ -15,8 +15,18 @@ from src.recommender import load_songs, recommend_songs
 def main() -> None:
     songs = load_songs("data/songs.csv") 
 
-    # Starter example profile
-    user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8}
+    # Taste profile used for all comparisons in this simulation run.
+    # This listener prefers chill, acoustic-leaning lofi with moderate energy.
+    user_prefs = {
+        "favorite_genre": "lofi",
+        "favorite_mood": "chill",
+        "target_energy": 0.42,
+        "target_valence": 0.62,
+        "likes_acoustic": True,
+        "target_liveness": 0.25,
+        "target_speechiness": 0.10,
+        "target_instrumentalness": 0.65,
+    }
 
     recommendations = recommend_songs(user_prefs, songs, k=5)
 
