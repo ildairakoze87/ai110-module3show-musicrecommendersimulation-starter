@@ -19,15 +19,29 @@ This version builds a simple content-based music recommender that suggests songs
 
 This system uses a simple content-based recommender. Each song is described by features such as genre, mood, energy, valence, tempo, acousticness, liveness, speechiness, and instrumentalness. The user profile stores a preferred genre, preferred mood, target energy level, and a preference for acoustic or non-acoustic songs, plus optional targets for the new numeric features.
 
-To score a song, the recommender uses this finalized starter recipe:
+### Plan (Data Flow)
 
-- Genre match: +2.0
-- Mood match: +1.0
-- Energy similarity: add a similarity score based on closeness to target energy, where similarity = 1.0 - abs(song_energy - target_energy)
+- Input: User preferences (favorite genre, favorite mood, target energy, and optional numeric targets)
+- Process: Loop through every song in the CSV and compute a song score using the scoring rules
+- Output: Sort all songs by score and return the Top K recommendations
 
-Additional optional features (acousticness, valence, liveness, speechiness, instrumentalness) are kept as smaller tie-breaker signals.
+### Finalized Algorithm Recipe
 
-The recommender ranks all songs by total score and returns the highest-scoring ones. This makes the recommendations easy to explain because each result can be traced to a few clear reasons.
+For each song:
+
+1. Start with score = 0.
+2. Add +2.0 if the song genre matches the user favorite genre.
+3. Add +1.0 if the song mood matches the user favorite mood.
+4. Add an energy similarity score, where:
+   similarity = 1.0 - abs(song_energy - target_energy)
+5. Add smaller tie-breaker contributions from acousticness, valence, liveness, speechiness, and instrumentalness when those user targets/preferences are provided.
+6. After scoring all songs, rank them from highest to lowest and return the Top K.
+
+This setup keeps the logic explainable: each recommendation can be traced to exact matching and similarity terms.
+
+### Potential Biases
+
+This system might over-prioritize genre and under-recommend songs outside the user favorite genre, even when those songs match mood and energy very well. It may also reflect dataset bias if some genres or moods are underrepresented in the catalog.
 
 At a larger scale, real recommender systems usually combine this kind of content matching with user-interaction data such as listens, skips, likes, and playlists. They often learn patterns from millions of users and songs, then update recommendations continuously as behavior changes.
 
