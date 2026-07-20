@@ -157,48 +157,57 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     target_instrumentalness = user_prefs.get("instrumentalness") or user_prefs.get("target_instrumentalness")
 
     if preferred_genre and song.get("genre") == preferred_genre:
-        score += weights["genre_match"]
-        reasons.append("matches the favorite genre")
+        points = weights["genre_match"]
+        score += points
+        reasons.append(f"genre match (+{points:.1f})")
 
     if preferred_mood and song.get("mood") == preferred_mood:
-        score += weights["mood_match"]
-        reasons.append("matches the favorite mood")
+        points = weights["mood_match"]
+        score += points
+        reasons.append(f"mood match (+{points:.1f})")
 
     if target_energy is not None:
         energy_similarity = max(0.0, 1.0 - abs(float(song.get("energy", 0.0)) - float(target_energy)))
-        score += energy_similarity * weights["energy_similarity"]
-        reasons.append("energy is close to the target profile")
+        points = energy_similarity * weights["energy_similarity"]
+        score += points
+        reasons.append(f"energy similarity (+{points:.2f})")
 
     if likes_acoustic is not None:
         acousticness = float(song.get("acousticness", 0.0))
         if likes_acoustic:
             if acousticness >= 0.6:
-                score += weights["acoustic_bonus"]
-                reasons.append("acousticness fits the acoustic preference")
+                points = weights["acoustic_bonus"]
+                score += points
+                reasons.append(f"acoustic preference match (+{points:.1f})")
         else:
             if acousticness < 0.5:
-                score += weights["acoustic_bonus"]
-                reasons.append("the song stays less acoustic")
+                points = weights["acoustic_bonus"]
+                score += points
+                reasons.append(f"acoustic preference match (+{points:.1f})")
 
     if target_valence is not None:
         valence_similarity = max(0.0, 1.0 - abs(float(song.get("valence", 0.0)) - float(target_valence)))
-        score += valence_similarity * weights["valence_similarity"]
-        reasons.append("valence matches the requested emotional tone")
+        points = valence_similarity * weights["valence_similarity"]
+        score += points
+        reasons.append(f"valence similarity (+{points:.2f})")
 
     if target_liveness is not None:
         liveness_similarity = max(0.0, 1.0 - abs(float(song.get("liveness", 0.0)) - float(target_liveness)))
-        score += liveness_similarity * weights["liveness_similarity"]
-        reasons.append("liveness fits the requested live feel")
+        points = liveness_similarity * weights["liveness_similarity"]
+        score += points
+        reasons.append(f"liveness similarity (+{points:.2f})")
 
     if target_speechiness is not None:
         speechiness_similarity = max(0.0, 1.0 - abs(float(song.get("speechiness", 0.0)) - float(target_speechiness)))
-        score += speechiness_similarity * weights["speechiness_similarity"]
-        reasons.append("speechiness matches the requested vocal texture")
+        points = speechiness_similarity * weights["speechiness_similarity"]
+        score += points
+        reasons.append(f"speechiness similarity (+{points:.2f})")
 
     if target_instrumentalness is not None:
         instrumentalness_similarity = max(0.0, 1.0 - abs(float(song.get("instrumentalness", 0.0)) - float(target_instrumentalness)))
-        score += instrumentalness_similarity * weights["instrumentalness_similarity"]
-        reasons.append("instrumentalness fits the requested texture")
+        points = instrumentalness_similarity * weights["instrumentalness_similarity"]
+        score += points
+        reasons.append(f"instrumentalness similarity (+{points:.2f})")
 
     return round(score, 3), reasons
 
